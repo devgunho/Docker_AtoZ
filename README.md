@@ -1,31 +1,49 @@
-# AWS Docker Operation
+# ML Data Serving Automation using Docker Containers (AWS)
 
-*Here is an example used in a system configuration that uses AWS docker containers.
-It also includes operational methods using other tools such as bash and Python.*
-
-<br/>
+> Here is an example used in a system configuration that uses AWS docker containers.
+> It also includes operational methods using other tools such as bash and Python.
 
 <br/>
 
-## # `AWS_Deploy_Automation`
+**Table of Contents**
+
+- [ML Data Serving Automation using Docker Containers (AWS)](#ml-data-serving-automation-using-docker-containers-aws)
+    - [Full Architecture](#full-architecture)
+    - [Features](#features)
+    - [Notes](#notes)
+      - [for SSH Connection](#for-ssh-connection)
+      - [Docker container from AWS (Client)](#docker-container-from-aws-client)
+      - [Docker container commit](#docker-container-commit)
+      - [Push to AWS](#push-to-aws)
+      - [Docker Registry Server setting (Private Server)](#docker-registry-server-setting-private-server)
+      - [Push to Docker Hub](#push-to-docker-hub)
+      - [Create a base image - pytorch/pytorch](#create-a-base-image---pytorchpytorch)
+      - [Create a base image - ubuntu:18.04](#create-a-base-image---ubuntu1804)
+      - [Dockerfile Example](#dockerfile-example)
+      - [`build-run.sh`](#build-runsh)
+      - [Docker Registration](#docker-registration)
+      - [`docker cp` from container to host](#docker-cp-from-container-to-host)
+      - [`docker diff`](#docker-diff)
+
+<br/>
+
+### Full Architecture
 
 ![Full_Architecture.drawio](README.assets/Full_Architecture.drawio.png)
 
 <br/>
 
+### Features
 
-
-.3<br/>
-
-<br/>                                                               
-
-## # Docker ops. Instruction Commands
-
-**Make Docker Private Registry & Manage docker containers with AWS**
+- Creation and management of Docker containers on AWS EC2 instances
+- Automated evaluation of participant models and result collection
+- Automation of data transfer and log management
 
 <br/>
 
-### 1. SSH Connection
+### Notes
+
+#### for SSH Connection
 
 ```bash
 $ sudo apt-get update
@@ -42,11 +60,7 @@ $ sudo apt-get install openssh-server
 $ ifconfig
 ```
 
-<br/>
-
-<br/>
-
-### 2-A. Docker container from AWS (Client)
+#### Docker container from AWS (Client)
 
 ```bash
 $ sudo apt-get update
@@ -64,39 +78,33 @@ $ sudo docker attach team-a-container1
 ```
 
 ```bash
-$ sudo docker start team-a-container1
-$ sudo docker attach team-a-container1
+sudo docker start team-a-container1
+sudo docker attach team-a-container1
 ```
 
-<br/>
-
-#### docker container commit
+#### Docker container commit
 
 ````bash
-$ sudo docker stop team-a-container1
-$ docker container commit -a "devgun" -m "test comment" team-a-container1 team-a-submit:1.0
+sudo docker stop team-a-container1
+docker container commit -a "devgun" -m "test comment" team-a-container1 team-a-submit:1.0
 ````
 
-<br/>
-
-#### A. push to AWS
+#### Push to AWS
 
 ```bash
-$ sudo apt install awscli
-$ docker tag team-a/submit:1.0 {aws_account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/team-a/submit:1.0
-$ docker push {aws_account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/team-a/submit:1.0
+sudo apt install awscli
+docker tag team-a/submit:1.0 {aws_account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/team-a/submit:1.0
+docker push {aws_account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/team-a/submit:1.0
 ```
 
-<br/>
-
-### 2-B. Docker Registry Server setting (Private Server)
+#### Docker Registry Server setting (Private Server)
 
 ```bash
 $ sudo apt-get install docker.io
 $ sudo docker pull registry:latest
 $ sudo docker images
 REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
-registry     latest    X			  15 hours ago   26.2MB
+registry     latest    X     15 hours ago   26.2MB
 
 $ sudo docker info
  Insecure Registries:
@@ -104,7 +112,7 @@ $ sudo docker info
 $ sudo service docker stop
 $ vi /etc/docker/daemon.json
 {
-	"insecure-registries":["{ServerIP}:5000"]
+ "insecure-registries":["{ServerIP}:5000"]
 }
 $ sudo docker info
  Insecure Registries:
@@ -116,22 +124,14 @@ $ sudo docker run --name local-registry -d -p 5000:5000 registry
 $ sudo docker container ls
 ```
 
-<br/>
-
-#### B. push to dockerhub
+#### Push to Docker Hub
 
 ```bash
-$ docker tag team-a-submit:1.0 devgunho/team-a-submit:1.0
-$ docker push devgunho/team-a-submit:1.0
-$ docker tag team-a-submit:1.0 devgunho/team-b-submit:1.0
-$ docker push devgunho/team-b-submit:1.0
+docker tag team-a-submit:1.0 devgunho/team-a-submit:1.0
+docker push devgunho/team-a-submit:1.0
+docker tag team-a-submit:1.0 devgunho/team-b-submit:1.0
+docker push devgunho/team-b-submit:1.0
 ```
-
-<br/>
-
-<br/>
-
-### 3. Make Docker Image (Client)
 
 #### Create a base image - pytorch/pytorch
 
@@ -146,33 +146,6 @@ $ sudo docker ps -a
 $ sudo docker start dev-env1
 ```
 
-<br/>
-
-##### # Issue 01 - Closed
-
-```bash
-IMAGE             COMMAND		CREATED			STATUS
-pytorch/pytorch   "/bin/bash"	7 minutes ago	Exited (0)
-```
-
-```bash
-$ sudo docker run -d -it --name dev-env2 pytorch/pytorch
-```
-
-```bash
-IMAGE             STATUS					NAMES
-pytorch/pytorch   Up 8 seconds				dev-env2
-pytorch/pytorch   Exited (0) 13 minutes ago	dev-env1
-registry          Up 5 hours				local-registry
-```
-
-```bash
-$ sudo docker exec -it dev-env2 bash
-:/# apt-get update
-```
-
-<br/>
-
 #### Create a base image - ubuntu:18.04
 
 ```bash
@@ -181,8 +154,6 @@ $ sudo docker run -d -it --name dev-env3 ubuntu
 $ sudo docker exec -it dev-env3 bash
 :/# apt-get update
 ```
-
-<br/>
 
 #### Dockerfile Example
 
@@ -243,9 +214,7 @@ xrdp -ns &
 /bin/bash
 ```
 
-<br/>
-
-`build-run.sh`
+#### `build-run.sh`
 
 - `./build-run.sh [PORT] [IMAGE NAME] [CONTAINER NAME]`
 
@@ -262,18 +231,14 @@ docker container start $3
 sed -i 's/'$1'/port_number/' ./Dockerfile
 ```
 
-<br/>
-
-### 4. Docker Registration
+#### Docker Registration
 
 ```bash
-$ docker build --tag {ServerIP}:5000/dev-env2 .
-$ docker push localhost:5000/dev-env1
-$ docker push localhost:5000/dev-env2
-$ docker push localhost:5000/dev-env3
+docker build --tag {ServerIP}:5000/dev-env2 .
+docker push localhost:5000/dev-env1
+docker push localhost:5000/dev-env2
+docker push localhost:5000/dev-env3
 ```
-
-<br/>
 
 ```bash
 $ sudo apt install curl
@@ -281,23 +246,11 @@ $ curl -X GET http://localhost:5000/v2/_catalog
 {"repositories":[]}
 ```
 
-<br/>
-
-<br/>
-
-----
-
-### 5. etc.
-
-<br/>
-
 #### `docker cp` from container to host
 
 ```bash
-$ sudo docker cp team-a-container-submit-1:/Challenge-Master /
+sudo docker cp team-a-container-submit-1:/Challenge-Master /
 ```
-
-<br/>
 
 #### `docker diff`
 
@@ -331,20 +284,3 @@ A /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_bionic-updates_InRelease
 C /root
 A /root/.bash_history
 ```
-
-<br/>
-
-<br/>
-
-<br/>
-
-## # `ops_with_bash`
-
-<br/>
-
-<br/>
-
-<br/>
-
-## # `ops_with_python`
-
